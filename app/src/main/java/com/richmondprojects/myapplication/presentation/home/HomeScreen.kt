@@ -60,9 +60,13 @@ fun HomeScreen(
         SwipeRefresh(
             state = swipeRefreshState,
             onRefresh = { viewModel.onEvents(HomeScreenEvents.isRefreshing) }) {
+
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(states.results.size) { x ->
-                    val outcome = states.results[x]
+                items(states.results.size) {
+                    if (it >= states.results.size -1 && !states.endReached && !states.isLoading) {
+                        viewModel.onEvents(HomeScreenEvents.isRefreshing)
+                    }
+                    val outcome = states.results[it]
                     ListContent(
                         results = outcome,
                         modifier = Modifier
@@ -71,13 +75,10 @@ fun HomeScreen(
                             .clickable {
                                 navigator.navigate(
                                     DetailScreenDestination(
-                                        outcome.url
-                                            .dropLast(1)
-                                            .takeLastWhile { it.isDigit() })
-                                )
+                                        outcome.url.dropLast(1).takeLastWhile { it.isDigit() }))
                             }
                     )
-                    if (x < states.results.size) {
+                    if (it < states.results.size) {
                         Divider()
                     }
                 }

@@ -18,7 +18,7 @@ class HomeViewModel @Inject constructor(
     private val repository: Repository
 ) : ViewModel() {
 
-    private var curPage = 1
+    private var curPage = 0
 
     var states by mutableStateOf(HomeScreenStates())
 
@@ -44,21 +44,27 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun getCharacters(
+    fun getCharacters(
         query: String = states.searchQuery.lowercase(),
         fetchFromRemote: Boolean = false
     ) {
         viewModelScope.launch {
-            repository.getCharacters(curPage, query, fetchFromRemote)
+            states = states.copy(isLoading = true)
+            repository.getCharacters(page = 1 + curPage, query, fetchFromRemote)
                 .collect { resultsEntity ->
                     when (resultsEntity) {
                         is Resource.Success -> {
                             resultsEntity.data?.let {
                                 states = states.copy(results = it)
                             }
-                            curPage += 1
+                            curPage++
                         }
-                        is Resource.Error -> {}
+                        is Resource.Error -> {
+                            states = states.copy(
+                                results = emptyList(),
+                                isLoading = false
+                            )
+                        }
                         is Resource.Loading -> {
                             states = states.copy(
                                 isLoading = resultsEntity.isLoading
